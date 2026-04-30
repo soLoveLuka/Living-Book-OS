@@ -22,6 +22,7 @@ type ThoughtNode = {
 
 type View = "cover" | "book" | "thoughtspace";
 type CameraState = { x: number; y: number; z: number };
+type ToolMode = "pan" | "pen";
 
 const STORAGE = "living-book-os-v1";
 
@@ -66,12 +67,16 @@ export default function Home() {
   const [nodes, setNodes] = useState<ThoughtNode[]>(initial.nodes);
   const [camera, setCamera] = useState<CameraState>(initial.camera);
   const [pageIndex, setPageIndex] = useState(0);
+  const [tool, setTool] = useState<ToolMode>("pan");
+  const [strokes, setStrokes] = useState<{ id: string; points: { x: number; y: number }[] }[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [drawing, setDrawing] = useState(false);
   const [pulse, setPulse] = useState(0);
   const last = useRef({ x: 0, y: 0 });
   const velocity = useRef({ x: 0, y: 0 });
   const cameraTarget = useRef(initial.camera);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const activeStroke = useRef<string | null>(null);
 
   const activeChapter = useMemo(
     () => chapters.find((c) => c.id === activeChapterId) ?? chapters[0],
@@ -304,11 +309,28 @@ export default function Home() {
                     className="relative h-full w-full overflow-hidden rounded-[2rem] border border-white/10 bg-black/40"
                     onWheel={onWheel}
                     onPointerDown={(e) => {
+                      if (tool === "pen") {
+                        setDrawing(true);
+                        const rect = canvasRef.current?.getBoundingClientRect();
+                        const sx = ((e.clientX - (rect?.left ?? 0) - (camera.x - 1200)) / camera.z);
+                        const sy = ((e.clientY - (rect?.top ?? 0) - (camera.y - 1200)) / camera.z);
+                        const id = crypto.randomUUID();
+                        activeStroke.current = id;
+                        setStrokes((prev) => [...prev, { id, points: [{ x: sx, y: sy }] }]);
+                        return;
+                      }
                       setDragging(true);
                       last.current = { x: e.clientX, y: e.clientY };
                       velocity.current = { x: 0, y: 0 };
                     }}
                     onPointerMove={(e) => {
+                      if (drawing && tool === "pen" && activeStroke.current) {
+                        const rect = canvasRef.current?.getBoundingClientRect();
+                        const sx = ((e.clientX - (rect?.left ?? 0) - (camera.x - 1200)) / camera.z);
+                        const sy = ((e.clientY - (rect?.top ?? 0) - (camera.y - 1200)) / camera.z);
+                        setStrokes((prev) => prev.map((s) => s.id === activeStroke.current ? { ...s, points: [...s.points, { x: sx, y: sy }] } : s));
+                        return;
+                      }
                       if (!dragging) return;
                       const dx = e.clientX - last.current.x;
                       const dy = e.clientY - last.current.y;
@@ -321,10 +343,22 @@ export default function Home() {
                       };
                     }}
                     onPointerUp={() => setDragging(false)}
-                    onPointerLeave={() => setDragging(false)}
+                    onPointerUpCapture={() => {
+                      setDrawing(false);
+                      activeStroke.current = null;
+                    }}
+                    onPointerLeave={() => {
+                      setDragging(false);
+                      setDrawing(false);
+                      activeStroke.current = null;
+                    }}
                   >
                     <div className="absolute left-4 top-4 z-20 rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs text-zinc-300">
                       x:{Math.round(camera.x)} y:{Math.round(camera.y)} z:{camera.z.toFixed(2)}
+                    </div>
+                    <div className="absolute right-4 top-4 z-20 flex gap-2 text-xs">
+                      <button onClick={() => setTool("pan")} className={`rounded-full border px-3 py-1 ${tool === "pan" ? "border-amber-200/60 text-amber-200" : "border-white/20 text-zinc-300"}`}>Pan</button>
+                      <button onClick={() => setTool("pen")} className={`rounded-full border px-3 py-1 ${tool === "pen" ? "border-amber-200/60 text-amber-200" : "border-white/20 text-zinc-300"}`}>Pen</button>
                     </div>
 
                     <motion.div
@@ -347,6 +381,19 @@ export default function Home() {
                           {node.text}
                         </motion.div>
                       ))}
+                      <svg className="pointer-events-none absolute inset-0 h-full w-full">
+                        {strokes.map((s) => (
+                          <polyline
+                            key={s.id}
+                            fill="none"
+                            stroke="rgba(245, 208, 140, 0.9)"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            points={s.points.map((p) => `${p.x},${p.y}`).join(" ")}
+                          />
+                        ))}
+                      </svg>
                     </motion.div>
                   </div>
                 </section>
