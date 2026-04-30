@@ -1,2 +1,2 @@
-:HL["/Living-Book-OS/_next/static/chunks/101pnv972jdde.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"AZn-kd0DVOMsARI6NW2JX"}
+:HL["/Living-Book-OS/_next/static/chunks/10ql8sfnzmseu.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"v1rcNoloGq-wCYcplH_wQ"}

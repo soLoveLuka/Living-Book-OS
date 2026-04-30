@@ -71,6 +71,7 @@ export default function Home() {
   const [pageIndex, setPageIndex] = useState(0);
   const [tool, setTool] = useState<ToolMode>("pan");
   const [strokes, setStrokes] = useState<{ id: string; points: { x: number; y: number }[] }[]>(initial.strokes ?? []);
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [drawing, setDrawing] = useState(false);
   const [pulse, setPulse] = useState(0);
@@ -154,7 +155,15 @@ export default function Home() {
     const node = nodes.find((n) => n.id === id);
     if (!node) return setView("thoughtspace");
     setView("thoughtspace");
+    setActiveNodeId(id);
     cameraTarget.current = { x: -node.x + 120, y: -node.y + 80, z: 1.15 };
+  };
+
+  const focusNode = (id: string) => {
+    const node = nodes.find((n) => n.id === id);
+    if (!node) return;
+    setActiveNodeId(id);
+    cameraTarget.current = { x: -node.x + 220, y: -node.y + 140, z: 1.35 };
   };
 
   const pages = useMemo(() => {
@@ -398,11 +407,13 @@ export default function Home() {
                       {nodes.map((node) => (
                         <motion.div
                           key={node.id}
-                          className="absolute max-w-[280px] rounded-2xl border border-white/12 bg-zinc-950/70 px-4 py-3 text-sm"
+                          onDoubleClick={() => focusNode(node.id)}
+                          className={`absolute max-w-[280px] rounded-2xl border bg-zinc-950/70 px-4 py-3 text-sm transition-colors ${activeNodeId === node.id ? "border-amber-200/65" : "border-white/12"}`}
                           style={{ left: node.x, top: node.y }}
                           animate={{ boxShadow: pulse % 2 ? "0 0 0 rgba(0,0,0,0)" : "0 0 30px rgba(111,84,217,.25)" }}
                         >
                           {node.text}
+                          {node.page && <div className="mt-1 text-[10px] tracking-[0.18em] text-amber-200/70">PAGE {node.page}</div>}
                         </motion.div>
                       ))}
                       <svg className="pointer-events-none absolute inset-0 h-full w-full">
