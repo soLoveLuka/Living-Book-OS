@@ -33,6 +33,7 @@ function loadInitial() {
     nodes: [] as ThoughtNode[],
     camera: { x: 0, y: 0, z: 1 } as CameraState,
     view: "cover" as View,
+    strokes: [] as { id: string; points: { x: number; y: number }[] }[],
   };
   if (typeof window === "undefined") {
     fallback.activeChapterId = fallback.chapters[0].id;
@@ -52,6 +53,7 @@ function loadInitial() {
       nodes: Array.isArray(parsed.nodes) ? parsed.nodes : [],
       camera: (parsed.camera || { x: 0, y: 0, z: 1 }) as CameraState,
       view: parsed.view || "cover",
+      strokes: Array.isArray(parsed.strokes) ? parsed.strokes : [],
     };
   } catch {
     fallback.activeChapterId = fallback.chapters[0].id;
@@ -68,7 +70,7 @@ export default function Home() {
   const [camera, setCamera] = useState<CameraState>(initial.camera);
   const [pageIndex, setPageIndex] = useState(0);
   const [tool, setTool] = useState<ToolMode>("pan");
-  const [strokes, setStrokes] = useState<{ id: string; points: { x: number; y: number }[] }[]>([]);
+  const [strokes, setStrokes] = useState<{ id: string; points: { x: number; y: number }[] }[]>(initial.strokes ?? []);
   const [dragging, setDragging] = useState(false);
   const [drawing, setDrawing] = useState(false);
   const [pulse, setPulse] = useState(0);
@@ -86,9 +88,9 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem(
       STORAGE,
-      JSON.stringify({ chapters, activeChapterId, nodes, camera, view })
+      JSON.stringify({ chapters, activeChapterId, nodes, camera, view, strokes })
     );
-  }, [chapters, activeChapterId, nodes, camera, view]);
+  }, [chapters, activeChapterId, nodes, camera, view, strokes]);
 
   useEffect(() => {
     const id = setInterval(() => setPulse((p) => (p + 1) % 1000), 3500);
@@ -359,6 +361,8 @@ export default function Home() {
                     <div className="absolute right-4 top-4 z-20 flex gap-2 text-xs">
                       <button onClick={() => setTool("pan")} className={`rounded-full border px-3 py-1 ${tool === "pan" ? "border-amber-200/60 text-amber-200" : "border-white/20 text-zinc-300"}`}>Pan</button>
                       <button onClick={() => setTool("pen")} className={`rounded-full border px-3 py-1 ${tool === "pen" ? "border-amber-200/60 text-amber-200" : "border-white/20 text-zinc-300"}`}>Pen</button>
+                      <button onClick={() => setStrokes((prev) => prev.slice(0, -1))} className="rounded-full border border-white/20 px-3 py-1 text-zinc-300 hover:border-white/40">Undo Ink</button>
+                      <button onClick={() => setStrokes([])} className="rounded-full border border-white/20 px-3 py-1 text-zinc-300 hover:border-white/40">Clear Ink</button>
                     </div>
 
                     <motion.div
