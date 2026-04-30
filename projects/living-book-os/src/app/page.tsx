@@ -381,6 +381,14 @@ export default function Home() {
                       activeStroke.current = null;
                     }}
                   >
+                    <div
+                      className="pointer-events-none absolute inset-0 opacity-60"
+                      style={{
+                        backgroundImage:
+                          "radial-gradient(circle at 20% 15%, rgba(95,54,185,0.28), transparent 38%), radial-gradient(circle at 82% 78%, rgba(168,48,74,0.2), transparent 40%)",
+                        transform: `translate(${camera.x * 0.08}px, ${camera.y * 0.08}px) scale(${1 + (camera.z - 1) * 0.05})`,
+                      }}
+                    />
                     <div className="absolute left-4 top-4 z-20 rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs text-zinc-300">
                       x:{Math.round(camera.x)} y:{Math.round(camera.y)} z:{camera.z.toFixed(2)}
                     </div>
