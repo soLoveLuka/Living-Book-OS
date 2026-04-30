@@ -64,6 +64,7 @@ export default function Home() {
   const [activeChapterId, setActiveChapterId] = useState<string>(initial.activeChapterId);
   const [nodes, setNodes] = useState<ThoughtNode[]>(initial.nodes);
   const [camera, setCamera] = useState<CameraState>(initial.camera);
+  const [pageIndex, setPageIndex] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [pulse, setPulse] = useState(0);
   const last = useRef({ x: 0, y: 0 });
@@ -156,6 +157,16 @@ export default function Home() {
     return arr.length ? arr : [""];
   }, [activeChapter.content]);
 
+  useEffect(() => {
+    setPageIndex(0);
+  }, [activeChapterId]);
+
+  useEffect(() => {
+    if (pageIndex > pages.length - 1) setPageIndex(Math.max(0, pages.length - 1));
+  }, [pageIndex, pages.length]);
+
+  const displayedPage = pages[pageIndex] ?? "";
+
   return (
     <main className="relative h-screen w-screen overflow-hidden grain">
       <AnimatePresence mode="wait">
@@ -243,12 +254,18 @@ export default function Home() {
                     <textarea
                       className="mt-6 h-[56vh] w-[52%] min-w-[320px] resize-none border-none bg-transparent text-[17px] leading-8 outline-none"
                       placeholder="Write the living page..."
-                      value={activeChapter.content}
-                      onChange={(e) => updateChapter({ content: e.target.value })}
+                      value={displayedPage}
+                      onChange={(e) => {
+                        const nextPages = [...pages];
+                        nextPages[pageIndex] = e.target.value;
+                        updateChapter({ content: nextPages.join("") });
+                      }}
                     />
                     <div className="mt-4 flex items-center justify-between text-xs text-zinc-400">
-                      <div>{activeChapter.content.trim().split(/\s+/).filter(Boolean).length} words · {pages.length} pages</div>
+                      <div>{activeChapter.content.trim().split(/\s+/).filter(Boolean).length} words · page {pageIndex + 1}/{pages.length}</div>
                       <div className="flex items-center gap-2">
+                        <button onClick={() => setPageIndex((p) => Math.max(0, p - 1))} className="rounded-full border border-white/20 px-3 py-1 hover:border-white/40">Prev Page</button>
+                        <button onClick={() => setPageIndex((p) => Math.min(pages.length - 1, p + 1))} className="rounded-full border border-white/20 px-3 py-1 hover:border-white/40">Next Page</button>
                         <button onClick={addAnchor} className="rounded-full border border-white/20 px-3 py-1 hover:border-white/40"><Network size={12} className="mr-1 inline" /> Anchor Thought</button>
                         {activeChapter.anchors.at(-1) && (
                           <button
