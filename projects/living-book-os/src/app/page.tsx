@@ -67,6 +67,8 @@ export default function Home() {
   const [dragging, setDragging] = useState(false);
   const [pulse, setPulse] = useState(0);
   const last = useRef({ x: 0, y: 0 });
+  const velocity = useRef({ x: 0, y: 0 });
+  const cameraTarget = useRef(initial.camera);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const activeChapter = useMemo(
@@ -84,6 +86,28 @@ export default function Home() {
   useEffect(() => {
     const id = setInterval(() => setPulse((p) => (p + 1) % 1000), 3500);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      setCamera((current) => {
+        const tx = cameraTarget.current.x;
+        const ty = cameraTarget.current.y;
+        const tz = cameraTarget.current.z;
+        const next = {
+          x: current.x + (tx - current.x) * 0.16 + velocity.current.x,
+          y: current.y + (ty - current.y) * 0.16 + velocity.current.y,
+          z: current.z + (tz - current.z) * 0.2,
+        };
+        velocity.current.x *= 0.9;
+        velocity.current.y *= 0.9;
+        return next;
+      });
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   const addChapter = () => {
@@ -113,15 +137,15 @@ export default function Home() {
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    const next = Math.min(2.8, Math.max(0.25, camera.z - e.deltaY * 0.0015));
-    setCamera((c) => ({ ...c, z: next }));
+    const next = Math.min(3.6, Math.max(0.08, cameraTarget.current.z - e.deltaY * 0.0014));
+    cameraTarget.current = { ...cameraTarget.current, z: next };
   };
 
   const gotoAnchor = (id: string) => {
     const node = nodes.find((n) => n.id === id);
     if (!node) return setView("thoughtspace");
     setView("thoughtspace");
-    setCamera({ x: -node.x + 120, y: -node.y + 80, z: 1.15 });
+    cameraTarget.current = { x: -node.x + 120, y: -node.y + 80, z: 1.15 };
   };
 
   const pages = useMemo(() => {
@@ -247,13 +271,19 @@ export default function Home() {
                     onPointerDown={(e) => {
                       setDragging(true);
                       last.current = { x: e.clientX, y: e.clientY };
+                      velocity.current = { x: 0, y: 0 };
                     }}
                     onPointerMove={(e) => {
                       if (!dragging) return;
                       const dx = e.clientX - last.current.x;
                       const dy = e.clientY - last.current.y;
                       last.current = { x: e.clientX, y: e.clientY };
-                      setCamera((c) => ({ ...c, x: c.x + dx, y: c.y + dy }));
+                      velocity.current = { x: dx * 0.05, y: dy * 0.05 };
+                      cameraTarget.current = {
+                        ...cameraTarget.current,
+                        x: cameraTarget.current.x + dx,
+                        y: cameraTarget.current.y + dy,
+                      };
                     }}
                     onPointerUp={() => setDragging(false)}
                     onPointerLeave={() => setDragging(false)}
