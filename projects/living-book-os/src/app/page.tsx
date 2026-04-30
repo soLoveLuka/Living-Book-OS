@@ -17,6 +17,7 @@ type ThoughtNode = {
   x: number;
   y: number;
   chapterId?: string;
+  page?: number;
 };
 
 type View = "cover" | "book" | "thoughtspace";
@@ -133,7 +134,7 @@ export default function Home() {
     const label = `Thought ${activeChapter.anchors.length + 1}`;
     const anchor = { id, label, x: camera.x * -1 + 120 * Math.random(), y: camera.y * -1 + 120 * Math.random() };
     updateChapter({ anchors: [...activeChapter.anchors, anchor] });
-    setNodes((prev) => [...prev, { id, text: label, x: anchor.x, y: anchor.y, chapterId: activeChapterId }]);
+    setNodes((prev) => [...prev, { id, text: label, x: anchor.x, y: anchor.y, chapterId: activeChapterId, page: pageIndex + 1 }]);
   };
 
   const onWheel = (e: React.WheelEvent) => {
@@ -166,6 +167,10 @@ export default function Home() {
   }, [pageIndex, pages.length]);
 
   const displayedPage = pages[pageIndex] ?? "";
+  const chapterNodes = useMemo(
+    () => nodes.filter((n) => n.chapterId === activeChapterId),
+    [nodes, activeChapterId]
+  );
 
   return (
     <main className="relative h-screen w-screen overflow-hidden grain">
@@ -277,6 +282,19 @@ export default function Home() {
                         )}
                       </div>
                     </div>
+                    {chapterNodes.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-300">
+                        {chapterNodes.slice(-6).map((n) => (
+                          <button
+                            key={n.id}
+                            onClick={() => gotoAnchor(n.id)}
+                            className="rounded-full border border-white/20 px-3 py-1 hover:border-white/40"
+                          >
+                            {n.text} · p{n.page ?? 1}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </section>
                 </div>
 
