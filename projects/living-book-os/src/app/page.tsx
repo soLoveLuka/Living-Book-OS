@@ -124,6 +124,14 @@ export default function Home() {
     setCamera({ x: -node.x + 120, y: -node.y + 80, z: 1.15 });
   };
 
+  const pages = useMemo(() => {
+    const text = activeChapter.content || "";
+    const size = 1650;
+    const arr = [] as string[];
+    for (let i = 0; i < Math.max(1, text.length); i += size) arr.push(text.slice(i, i + size));
+    return arr.length ? arr : [""];
+  }, [activeChapter.content]);
+
   return (
     <main className="relative h-screen w-screen overflow-hidden grain">
       <AnimatePresence mode="wait">
@@ -171,16 +179,12 @@ export default function Home() {
               </div>
             </header>
 
-            <AnimatePresence mode="wait">
-              {view === "book" && (
-                <motion.div
-                  key="book"
-                  className="absolute inset-0 grid grid-cols-[280px_1fr] gap-4 p-6 pt-18"
-                  initial={{ x: -70, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -70, opacity: 0 }}
-                  transition={{ type: "spring", damping: 22, stiffness: 140 }}
-                >
+            <motion.div
+              className="absolute inset-0"
+              animate={{ x: view === "book" ? "0%" : "-100%" }}
+              transition={{ type: "spring", damping: 24, stiffness: 120, mass: 0.9 }}
+            >
+              <div className="absolute inset-0 w-full grid grid-cols-[280px_1fr] gap-4 p-6 pt-18">
                   <aside className="rounded-3xl border border-white/10 bg-black/45 p-4 backdrop-blur">
                     <p className="mb-3 text-[11px] tracking-[0.22em] text-zinc-400">MANUSCRIPT NAV</p>
                     <div className="hide-scrollbar max-h-[65vh] space-y-2 overflow-auto">
@@ -197,20 +201,29 @@ export default function Home() {
                     <button onClick={addChapter} className="mt-3 w-full rounded-2xl border border-white/15 p-2 text-sm hover:border-white/35"><Plus size={14} className="mr-1 inline" /> New Chapter</button>
                   </aside>
 
-                  <section className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,.25))] p-8 shadow-2xl backdrop-blur">
+                  <section className="relative rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,.02),rgba(0,0,0,.25))] p-8 shadow-2xl backdrop-blur">
+                    <div className="pointer-events-none absolute right-14 top-16 h-[56vh] w-[42%] min-w-[260px]">
+                      {[...Array(Math.min(6, pages.length)).keys()].map((i) => (
+                        <div
+                          key={i}
+                          className="absolute inset-0 rounded-md border border-white/12 bg-zinc-100/95"
+                          style={{ transform: `translate(${i * 4}px, ${i * 3}px)`, opacity: 1 - i * 0.12 }}
+                        />
+                      ))}
+                    </div>
                     <input
                       className="w-full border-none bg-transparent text-3xl font-light outline-none"
                       value={activeChapter.title}
                       onChange={(e) => updateChapter({ title: e.target.value })}
                     />
                     <textarea
-                      className="mt-6 h-[56vh] w-full resize-none border-none bg-transparent text-[17px] leading-8 outline-none"
+                      className="mt-6 h-[56vh] w-[52%] min-w-[320px] resize-none border-none bg-transparent text-[17px] leading-8 outline-none"
                       placeholder="Write the living page..."
                       value={activeChapter.content}
                       onChange={(e) => updateChapter({ content: e.target.value })}
                     />
                     <div className="mt-4 flex items-center justify-between text-xs text-zinc-400">
-                      <div>{activeChapter.content.trim().split(/\s+/).filter(Boolean).length} words</div>
+                      <div>{activeChapter.content.trim().split(/\s+/).filter(Boolean).length} words · {pages.length} pages</div>
                       <div className="flex items-center gap-2">
                         <button onClick={addAnchor} className="rounded-full border border-white/20 px-3 py-1 hover:border-white/40"><Network size={12} className="mr-1 inline" /> Anchor Thought</button>
                         {activeChapter.anchors.at(-1) && (
@@ -224,18 +237,9 @@ export default function Home() {
                       </div>
                     </div>
                   </section>
-                </motion.div>
-              )}
+                </div>
 
-              {view === "thoughtspace" && (
-                <motion.section
-                  key="thoughtspace"
-                  className="absolute inset-0 p-4 pt-18"
-                  initial={{ x: 70, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: 70, opacity: 0 }}
-                  transition={{ type: "spring", damping: 22, stiffness: 140 }}
-                >
+                <section className="absolute inset-0 left-full w-full p-4 pt-18">
                   <div
                     ref={canvasRef}
                     className="relative h-full w-full overflow-hidden rounded-[2rem] border border-white/10 bg-black/40"
@@ -280,9 +284,8 @@ export default function Home() {
                       ))}
                     </motion.div>
                   </div>
-                </motion.section>
-              )}
-            </AnimatePresence>
+                </section>
+            </motion.div>
           </motion.section>
         )}
       </AnimatePresence>
