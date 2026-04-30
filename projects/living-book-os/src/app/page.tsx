@@ -180,6 +180,19 @@ export default function Home() {
   );
   const isChapterOpening = pageIndex === 0;
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.tagName === "TEXTAREA" || (e.target as HTMLElement)?.tagName === "INPUT") return;
+      if (e.key.toLowerCase() === "t") setView((v) => (v === "book" ? "thoughtspace" : "book"));
+      if (e.key === "[") setPageIndex((p) => Math.max(0, p - 1));
+      if (e.key === "]") setPageIndex((p) => Math.min(pages.length - 1, p + 1));
+      if (e.key.toLowerCase() === "p") setTool("pan");
+      if (e.key.toLowerCase() === "i") setTool("pen");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pages.length]);
+
   return (
     <main className="relative h-screen w-screen overflow-hidden grain">
       <AnimatePresence mode="wait">
@@ -367,6 +380,9 @@ export default function Home() {
                       <button onClick={() => setTool("pen")} className={`rounded-full border px-3 py-1 ${tool === "pen" ? "border-amber-200/60 text-amber-200" : "border-white/20 text-zinc-300"}`}>Pen</button>
                       <button onClick={() => setStrokes((prev) => prev.slice(0, -1))} className="rounded-full border border-white/20 px-3 py-1 text-zinc-300 hover:border-white/40">Undo Ink</button>
                       <button onClick={() => setStrokes([])} className="rounded-full border border-white/20 px-3 py-1 text-zinc-300 hover:border-white/40">Clear Ink</button>
+                    </div>
+                    <div className="absolute bottom-4 right-4 z-20 rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-[10px] tracking-[0.08em] text-zinc-400">
+                      T toggle view · [ ] pages · P pan · I ink
                     </div>
 
                     <motion.div
