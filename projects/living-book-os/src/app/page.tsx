@@ -178,6 +178,7 @@ export default function Home() {
     () => nodes.filter((n) => n.chapterId === activeChapterId),
     [nodes, activeChapterId]
   );
+  const isChapterOpening = pageIndex === 0;
 
   return (
     <main className="relative h-screen w-screen overflow-hidden grain">
@@ -264,7 +265,7 @@ export default function Home() {
                       onChange={(e) => updateChapter({ title: e.target.value })}
                     />
                     <textarea
-                      className="mt-6 h-[56vh] w-[52%] min-w-[320px] resize-none border-none bg-transparent text-[17px] leading-8 outline-none"
+                      className={`mt-6 h-[56vh] w-[52%] min-w-[320px] resize-none border-none bg-transparent leading-8 outline-none ${isChapterOpening ? "text-[19px] tracking-[0.015em]" : "text-[17px]"}`}
                       placeholder="Write the living page..."
                       value={displayedPage}
                       onChange={(e) => {
@@ -289,6 +290,9 @@ export default function Home() {
                         )}
                       </div>
                     </div>
+                    {isChapterOpening && (
+                      <p className="mt-3 text-[10px] uppercase tracking-[0.35em] text-amber-200/70">Chapter Opening</p>
+                    )}
                     {chapterNodes.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-300">
                         {chapterNodes.slice(-6).map((n) => (
